@@ -31,8 +31,12 @@ class VideoStationAuthenticateHandler(BaseHandler):
                 if status is None:
                     yield self.stop_single_user(raw_user)
         else:
-            username = str(self.get_param_from_url(self.get_argument("next"), "user"))
-            if len(username == 0):
+            next_url = self.get_argument("next")
+            if "spawn" in next_url:
+                username = next_url.split("/")[-1]
+            else:
+                username = str(self.get_param_from_url(self.get_argument("next"), "user"))
+            if username == "":
                 username = str(uuid.uuid4())
             raw_user = self.user_from_username(username)
             self.set_login_cookie(raw_user)
@@ -41,7 +45,12 @@ class VideoStationAuthenticateHandler(BaseHandler):
 
     @staticmethod
     def get_param_from_url(url, param_name):
-        return [i.split("=")[-1] for i in url.split("?", 1)[-1].split("&") if i.startswith(param_name + "=")][0]
+        try:
+            return [i.split("=")[-1] for i in url.split("?", 1)[-1].split("&") if i.startswith(param_name + "=")][0]
+        except IndexError as E:
+            return ""
+
+
 
 
 class VideostationAuthenticator(Authenticator):
@@ -69,6 +78,7 @@ class VideostationAuthenticator(Authenticator):
     )
 
     def process_user(self, user, handler):
+        print("INSIDE PROCESS USER")
         """
         Do additional arbitrary things to the created user before spawn.
 
@@ -83,6 +93,7 @@ class VideostationAuthenticator(Authenticator):
         return user
 
     def get_handlers(self, app):
+        print("inside get handlers")
         # FIXME: How to do this better?
         extra_settings = {
             'force_new_server': self.force_new_server,
@@ -93,5 +104,5 @@ class VideostationAuthenticator(Authenticator):
         ]
 
     def login_url(self, base_url):
-        print(base_url)
+        print("inside login url")
         return url_path_join(base_url, 'tmplogin')
