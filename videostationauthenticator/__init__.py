@@ -28,8 +28,8 @@ class VideoStationAuthenticateHandler(BaseHandler):
                 # Stop user's current server if it is running
                 # so we get a new one.
                 status = yield raw_user.spawner.poll_and_notify()
-                if status is None:
-                    yield self.stop_single_user(raw_user)
+                # if status is None:
+                #     yield self.stop_single_user(raw_user)
         else:
             next_url = self.get_argument("next")
             if "spawn" in next_url:
@@ -79,6 +79,7 @@ class VideostationAuthenticator(Authenticator):
 
     def process_user(self, user, handler):
         print("INSIDE PROCESS USER")
+        print(user)
         """
         Do additional arbitrary things to the created user before spawn.
 
