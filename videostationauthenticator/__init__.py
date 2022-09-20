@@ -23,13 +23,15 @@ class VideoStationAuthenticateHandler(BaseHandler):
     @gen.coroutine
     def get(self):
         raw_user = yield self.get_current_user()
+        self.clear_cookie("jupyterhub-session-id")
+        self.clear_cookie("jupyterhub-hub-login")
         if raw_user:
             if self.force_new_server and user.running:
                 # Stop user's current server if it is running
                 # so we get a new one.
                 status = yield raw_user.spawner.poll_and_notify()
-                # if status is None:
-                #     yield self.stop_single_user(raw_user)
+                if status is None:
+                    yield self.stop_single_user(raw_user)
         else:
             next_url = self.get_argument("next")
             if "spawn" in next_url:
@@ -38,6 +40,8 @@ class VideoStationAuthenticateHandler(BaseHandler):
                 username = str(self.get_param_from_url(self.get_argument("next"), "user"))
             if username == "":
                 username = str(uuid.uuid4())
+            if "ts" in username:
+                username = username.split("&")[0]
             raw_user = self.user_from_username(username)
             self.set_login_cookie(raw_user)
         user = yield gen.maybe_future(self.process_user(raw_user, self))
@@ -106,4 +110,8 @@ class VideostationAuthenticator(Authenticator):
 
     def login_url(self, base_url):
         print("inside login url")
+        print(base_url)
+        if "ts" in base_url:
+                base_url = base_url.split("&")[0]
+        print(base_url)
         return url_path_join(base_url, 'tmplogin')
